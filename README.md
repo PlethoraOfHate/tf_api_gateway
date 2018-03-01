@@ -3,7 +3,7 @@ Python Wrapper gateway for the Terraform Enterprise API
 
 ***NOTE*** This is currently a [WIP] and will be evolving until it reaches a 1.0 version
 
-Since HashiCorp has decided to move the interface to Terraform Enteprise (formerly Atlas) to an API instead of using the command-line tool, the need quickly arose for an easy way to interface with this API. As such, I chose to create a python wrapper class that makes it relatively easy to utilize the API, both in day-2-day work, as well as integration into CI/CD pipelines and other similar use-cases.
+Since HashiCorp has decided to move the interface to Terraform Enteprise (formerly Atlas) to an API instead of using the command-line tool, the need quickly arose for an easy way to interface with this API. As such, I chose to create a python wrapper class that makes it relatively easy to utilize the API, both in day-2-day work, as well as integration into CI/CD pipelines and other similar use-cases. In case it is not clear, this is meant to be a companion framework to be used in other higher-level applications/utilities.
 
 Currently this is still a work in progress, both due to available time, as well as the availability and accuracy of HashiCorp's API documentation. Currently, the 'workspace', 'oauth', and 'variables' routes are implemented. Methods not yet completed are stubbed but simple return a "Not Completed" string.
 
