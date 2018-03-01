@@ -10,12 +10,11 @@ class apiGateway(object):
     def __init__(self, api_token, organization, **kwargs):
         """ Initializes the class object
 
-        Input vars:
-            api_token - Terraform Enterprise access token
-            organization - Terraform username
-        *Optional Vars*:
-            workspace - Name of the workspace you're working with (Defaults to 'new_workspace' when not provided)
-            tf_end_point = URL of the Terraform API endpoint
+        Args:
+            api_token (str): Terraform Enterprise access token
+            organization (str): Terraform username
+            workspace (str): *OPTIONAL* Name of the workspace you're working with (Defaults to 'new_workspace' when not provided)
+            tf_end_point (str): *OPTIONAL* URL of the Terraform API endpoint
         """
         self.api_token = api_token
         self.organization = organization
@@ -27,7 +26,12 @@ class apiGateway(object):
 #variables
 
     def getVariableList(self):
-        """ Gets a list of all variables on the current workspace """
+        """ Gets a list of all variables on the current workspace 
+        
+        Returns:
+            dict: The list of variables
+            
+        """
         end_point = self.end_point + "/vars"
         org_filter = "?filter[organization][username]=" + self.organization
         workspace_filter = "filter[workspace][name]=" + self.workspace
@@ -46,9 +50,12 @@ class apiGateway(object):
     def addVariable(self, var_name, var_value):
         """ Adds a new variable to the current workspace
 
-        Input Vars:
-            var_name - Name of the variable to add
-            var_value = Value to assign to the variable you're adding
+        Args:
+            var_name (str): Name of the variable to add
+            var_value (str): Value to assign to the variable you're adding
+
+        Returns:
+            dict: The JSON response from the API
         """
 
         end_point = self.end_point + "/vars"
@@ -63,15 +70,46 @@ class apiGateway(object):
 
         return(data)
 
-    def deleteVariable(self):
-        return("Not implemented yet")
+    def deleteVariable(self, var_name):
+        """ Deletes the specified variable
+
+        Args:
+            var_name (str): Name of the variable to add
+
+        Returns:
+            dict: The JSON response from the API
+        """
+
+        current_vars = self.getVariableList().get("data", [])
+        end_point = self.end_point + "/vars/"
+        headers = {'Authorization': 'Bearer ' + self.api_token,
+                   'Content-Type': 'application/vnd.api+json'}
+
+        try:
+            var_dict = {d["attributes"]["key"]: d for d in current_vars}
+            specific_var = var_dict[var_name]
+
+        except:
+            return("Error: Variable - " + var_name + " - not found.")
+
+        end_point = end_point + specific_var['id']
+
+        response = requests.delete(end_point, headers=headers)
+
+        data = json.loads(response.text)
+
+        return(data)
+
 
     def updateVariable(self, var_name, var_value):
         """ Updates the specified variable with the supplied value
 
-        Input Vars:
-            var_name - Name of the variable to add
-            var_value = Value to assign to the variable you're adding
+        Args:
+            var_name (str): Name of the variable to add
+            var_value (str): Value to assign to the variable you're adding
+
+        Returns:
+            dict: The JSON response from the API
         """
 
         current_vars = self.getVariableList().get("data", [])
@@ -138,7 +176,12 @@ class apiGateway(object):
 
 #workspaces
     def getWorkspaceList(self):
-        """ Returns a list of all the current workspaces on your account """
+        """ Returns a list of all the current workspaces on your account 
+        
+        Returns:
+            dict: The JSON list of workspaces from the API
+            
+        """
 
         end_point = self.end_point + "/organizations/" + self.organization +"/workspaces"
 
@@ -154,8 +197,11 @@ class apiGateway(object):
     def addWorkspace(self, workspace_name):
         """ Adds a new workspace to Terraform
 
-        Input Vars:
-            workspace_name = Name of the workspace to add
+        Args:
+            workspace_name (str): Name of the workspace to add
+
+        Returns:
+            dict: The JSON response from the API
         """
 
         end_point = self.end_point + "/organizations/" + self.organization +"/workspaces"
@@ -176,8 +222,11 @@ class apiGateway(object):
     def deleteWorkspace(self, workspace_name):
         """ Deletes the named workspace from Terraform
 
-        input_vars:
-            workspace_name - Name of the workspace to delete
+        Args:
+            workspace_name (str): Name of the workspace to delete
+
+        Returns:
+            dict: The JSON response from the API
         """
         end_point = self.end_point + "/organizations/" + self.organization +"/workspaces/" + workspace_name
         headers = {'Authorization': 'Bearer ' + self.api_token,
@@ -243,7 +292,11 @@ class apiGateway(object):
 #OAuthTokens
 
     def getOauthTokens(self):
-        """ Gets a list of all the OAuth tokens configured for your account """
+        """ Gets a list of all the OAuth tokens configured for your account 
+        
+        Returns:
+            dict: The JSON list of OAuth tokens from the API
+        """
         end_point = self.end_point + "/organizations/" + self.organization +"/oauth-tokens"
 
         headers = {'Authorization': 'Bearer ' + self.api_token,
