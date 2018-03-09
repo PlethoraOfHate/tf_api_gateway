@@ -27,8 +27,8 @@ myOrg = '[TERRAFORM_USER]'
 myWorkspace = '[WORSPACE_NAME]
 
 myGateway = apiGateway(api_token = myToken, 
-                                      organization = myOrg, 
-                                      workspace = myWorkspace)
+                       organization = myOrg, 
+                       workspace = myWorkspace)
 
 ## Add a variable to workspace
 myGateway.addVariable( var_name="var_name", 
@@ -44,3 +44,37 @@ Currently, the following methods are implemented:
 * addWorkspace()
 * deleteWorkspace()
 * getOauthTokens()
+
+# Console Application
+
+
+
+
+
+
+
+
+
+In addition to the library, I have provided a console application the implements the apiGateway interface. The primary intention of this tool is to facilitate the integration of Terraform into a CI/CD pipeline, however you could use it any way you see fit. (Obviously!) The application has detailed help when run from the console, as shown below...
+
+```
+user@host:/$ terraformGateway 
+Usage: terraformGateway [OPTIONS] COMMAND [ARGS]...
+
+  Console utility for interfacing with Terraform Enterprise
+
+  To see details for each command, use:
+   terraformGateway [command] --help
+
+Options:
+  --help  Show this message and exit.
+
+Commands:
+  addnew          Adds all new variables from the TF file to...
+  addworkspace    Adds a workspace to Terraform If not...
+  checkworkspace  Checks to see if Workspace exists If not...
+  compare         Compares variables between Terraform and TF...
+  removemissing   Removes variables from Terraform that are no...
+  updatevalues    Updates variables in Terraform with the...
+
+```
