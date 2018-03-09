@@ -1,9 +1,7 @@
-from datetime import datetime
-import sys, traceback
+import sys
+import traceback
 import json
 import requests
-
-
 
 class apiGateway(object):
     
@@ -20,7 +18,7 @@ class apiGateway(object):
         self.organization = organization
         
         self.workspace = kwargs.pop('workspace', 'new_workspace')
-        self.end_point = kwargs.pop('tf_end_point', 'https://atlas.hashicorp.com/api/v2')
+        self.end_point = kwargs.pop('tf_end_point', 'https://app.terraform.io/api/v2')
 
 
 #variables
@@ -32,14 +30,15 @@ class apiGateway(object):
             dict: The list of variables
             
         """
-        end_point = self.end_point + "/vars"
-        org_filter = "?filter[organization][username]=" + self.organization
+        end_point = self.end_point + "/vars?"
+        org_filter = "filter[organization][name]=" + self.organization
         workspace_filter = "filter[workspace][name]=" + self.workspace
 
         web_request = end_point + org_filter + "&" + workspace_filter
 
         headers = {'Authorization': 'Bearer ' + self.api_token,
                    'Content-Type': 'application/vnd.api+json'}
+        
 
         response = requests.get(web_request, headers=headers)
         
@@ -62,7 +61,13 @@ class apiGateway(object):
         headers = {'Authorization': 'Bearer ' + self.api_token,
                    'Content-Type': 'application/vnd.api+json'}
 
-        payload = json.dumps( self.__buildNewVariable( var_name, var_value ) )
+    
+        new_variable = self.__buildNewVariable( var_name, str(var_value) )
+
+        if isinstance( var_value, dict ):
+            new_variable['data']['attributes']['hcl'] = True
+
+        payload = json.dumps( new_variable )
 
         response = requests.post(end_point, headers=headers, data=payload)
 
@@ -96,9 +101,7 @@ class apiGateway(object):
 
         response = requests.delete(end_point, headers=headers)
 
-        data = json.loads(response.text)
-
-        return(data)
+        return(response.text)
 
 
     def updateVariable(self, var_name, var_value):
@@ -152,7 +155,7 @@ class apiGateway(object):
         workspace = {}
 
         workspace['name'] = self.workspace
-        organization['username'] = self.organization
+        organization['name'] = self.organization
 
         filter['organization'] = organization
         filter['workspace'] = workspace
