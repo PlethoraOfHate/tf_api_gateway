@@ -20,5 +20,11 @@ setup(name='tf_api_gateway',
       license='Apache License 2.0',
       keywords=['terraform', 'atlas'],
       packages=['tf_api_gateway'],
+      install_requires=[
+        "click",
+        "hcl",
+      ],
       include_package_data=True,
-      zip_safe=False)
+      zip_safe=False,
+      scripts=['scripts/terraformGateway']
+      )
