@@ -43,7 +43,7 @@ def cli():
 
     \b
     To see details for each command, use:
-     terraformGateway.py [command] --help"""
+     terraformGateway [command] --help"""
     pass
 
 
