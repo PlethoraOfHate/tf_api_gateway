@@ -4,9 +4,11 @@ from contextlib import contextmanager
 import os, sys, argparse
 import hcl
 import click
+import pprint
 sys.path.insert(1, os.path.join(sys.path[0], '..'))
 from tf_api_gateway import apiGateway
 
+pp = pprint.PrettyPrinter(indent=2)
 
 @contextmanager
 def log_call(msg):
