@@ -46,7 +46,7 @@ class apiGateway(object):
 
         return(data)
 
-    def addVariable(self, var_name, var_value):
+    def addVariable(self, var_name, var_value, **kwargs):
         """ Adds a new variable to the current workspace
 
         Args:
@@ -66,6 +66,8 @@ class apiGateway(object):
 
         if isinstance( var_value, dict ):
             new_variable['data']['attributes']['hcl'] = True
+
+        new_variable['data']['attributes']['sensitive'] = kwargs.pop('is_sensitive', False )
 
         payload = json.dumps( new_variable )
 
