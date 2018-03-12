@@ -109,7 +109,15 @@ def compare(tf_template, workspace, tf_key, organization):
 @click.option('--tf_key', default=os.environ['ATLAS_TOKEN'], help='Access Token for Terraform (Uses ATLAS_TOKEN environment var if not provided)')
 @click.option('--organization', default=os.environ['ATLAS_USERNAME'], help='Terraform Organization name (Uses ATLAS_USERNAME environment var if not provided)')
 def addNew(tf_template, workspace, tf_key, organization):
-    """Adds all new variables from the TF file to Terraform"""
+    """Adds all new variables from the TF file to Terraform
+    
+    If you have 'aws_access_key' or 'aws_secret_key' variables in your terraform file,
+    the application will use the following env vars to fill in those values (if found) and flags them as 'sensitive'
+
+    \b
+    TF_VAR_aws_access_key / AWS_ACCESS_KEY_ID
+    TF_VAR_aws_secret_key / AWS_SECRET_ACCESS_KEY
+    """
 
     templateData = load_terraform(tf_template)
 
@@ -125,6 +133,7 @@ def addNew(tf_template, workspace, tf_key, organization):
         with click.progressbar(added_keys) as keys_to_add:
             for k, v in enumerate(keys_to_add):
                 var_name = v
+                sensitive = False
 
                 if ( not isinstance( tf_var_list[var_name]['default'], int ) and not isinstance( tf_var_list[var_name]['default'], dict )):
                     if (len(tf_var_list[var_name]['default']) > 0):
@@ -134,7 +143,24 @@ def addNew(tf_template, workspace, tf_key, organization):
                 else:
                     var_value = tf_var_list[var_name]['default']
 
-                myGateway.addVariable(var_name, var_value)
+                if ( var_name == 'aws_access_key' ):
+                    if ( "TF_VAR_aws_access_key" in os.environ):
+                        var_value = os.environ['TF_VAR_aws_access_key']
+                        sensitive = True
+                    elif ( "AWS_ACCESS_KEY_ID" in os.environ):
+                        var_value = os.environ['AWS_ACCESS_KEY_ID']
+                        sensitive = True
+
+                if ( var_name == 'aws_secret_key' ):
+                    if ( "TF_VAR_aws_secret_key" in os.environ):
+                        var_value = os.environ['TF_VAR_aws_secret_key']
+                        sensitive = True
+                    elif ( "AWS_SECRET_ACCESS_KEY" in os.environ):
+                        var_value = os.environ['AWS_SECRET_ACCESS_KEY']
+                        sensitive = True
+                        
+
+                myGateway.addVariable(var_name, var_value, is_sensitive=sensitive)
 
 
 
