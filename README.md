@@ -7,7 +7,7 @@ Since HashiCorp has decided to move the interface to Terraform Enteprise (former
 
 Currently this is still a work in progress, both due to available time, as well as the availability and accuracy of HashiCorp's API documentation, which is in Beta. Currently, the 'workspace', 'oauth', and 'variables' routes are implemented. Methods not yet completed are stubbed but simple return a "Not Completed" string.
 
-In the future, I will be including example utilities to demonstrate various use-cases for this framework.
+The package now includes a console app as well, referenced below...
 
 # Usage
 
