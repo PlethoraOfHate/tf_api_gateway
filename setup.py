@@ -5,7 +5,7 @@ def readme():
         return f.read()
 
 setup(name='tf_api_gateway',
-      version='0.6',
+      version='0.63',
       description='Wrapper for the Terraform Enterprise API',
       classifiers=[
         'Development Status :: 3 - Alpha',
