@@ -188,14 +188,26 @@ class apiGateway(object):
             
         """
 
-        end_point = self.end_point + "/organizations/" + self.organization +"/workspaces"
+        end_point = self.end_point + "/organizations/" + self.organization +"/workspaces?size=100"
 
         headers = {'Authorization': 'Bearer ' + self.api_token,
                    'Content-Type': 'application/vnd.api+json'}
 
         response = requests.get(end_point, headers=headers)
-        
+
         data = json.loads(response.text)
+
+        nextPage = data
+
+        totalPages = data['meta']['pagination']['total-pages']
+
+        x = 1
+        while x < totalPages:
+            nextPage = requests.get(nextPage['links']['next'], headers=headers)
+            nextPage = json.loads(nextPage.text)
+            data['data'] = data['data'] + nextPage['data']
+            x += 1
+ 
 
         return(data)
 
@@ -221,8 +233,28 @@ class apiGateway(object):
 
         return(data)
 
-    def addWorkspaceWithVcs(self):
-        return("Not implemented yet")
+    def addWorkspaceWithVcs(self, workspace_name, git_repo_name):
+        """ Adds a new workspace to Terraform
+
+        Args:
+            workspace_name (str): Name of the workspace to add
+            git_repo_name (str): Path of the git project on the server (e.g. attainia-development/svc-atainia-api)
+
+        Returns:
+            dict: The JSON response from the API
+        """
+        oauth_token = self.getOauthTokens()
+        end_point = self.end_point + "/organizations/" + self.organization +"/workspaces"
+        headers = {'Authorization': 'Bearer ' + self.api_token,
+                   'Content-Type': 'application/vnd.api+json'}
+
+        payload = json.dumps( self.__buildNewWorkspace(workspace_name, git_repo_name=git_repo_name, oauth_token_id=oauth_token['data'][0]['id']) )
+
+        response = requests.post(end_point, headers=headers, data=payload)
+
+        data = json.loads(response.text)
+
+        return(data)
 
     def deleteWorkspace(self, workspace_name):
         """ Deletes the named workspace from Terraform
@@ -251,34 +283,33 @@ class apiGateway(object):
         full_array = {}
         data = {}
         attributes = {}
+        vcs_repo = {}
 
         if len(kwargs) > 0:
-            ingress_trigger_attributes = {}
+            vcs_repo = {}
 
             attributes['name'] = workspace_name
-            attributes['working-directory'] = workspace_name
-            if kwargs['git_repo_name']:
-                attributes['linkable-repo-id'] = kwargs['git_repo_name']
+            attributes['working-directory'] = ""
+            if ( 'git_repo_name' in kwargs ):
+                vcs_repo['identifier'] = kwargs['git_repo_name']
             else:
                 return("Error: Git Repo Name Required")
             
-            if kwargs['oauth-token-id']:
-                attributes['oauth-token-id'] = kwargs['oauth-token-id']
+            if ( 'oauth_token_id' in kwargs ):
+                vcs_repo['oauth-token-id'] = kwargs['oauth_token_id']
             else:
                 return("Error: OAuth Token ID Required")
 
-            if kwargs['git_branch']:
-                ingress_trigger_attributes['branch'] = kwargs['git_branch']
-                ingress_trigger_attributes['default-branch'] = False
+            if ( 'git_branch' in kwargs ):
+                vcs_repo['branch'] = kwargs['git_branch']
+                vcs_repo['default-branch'] = False
             else:
-                ingress_trigger_attributes['branch'] = ""
-                ingress_trigger_attributes['default-branch'] = True
+                vcs_repo['branch'] = ""
+                vcs_repo['default-branch'] = True
 
-            ingress_trigger_attributes['vcs-root-path'] = kwargs.pop('vcs-root-path', '')
+            attributes["vcs-repo"] = vcs_repo
 
-            attributes["ingress-trigger-attributes"] = ingress_trigger_attributes
-
-            data['type'] = "compound-workspaces"
+            data['type'] = "workspaces"
             data['attributes'] = attributes
 
             full_array['data'] = data
