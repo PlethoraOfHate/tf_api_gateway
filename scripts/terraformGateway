@@ -271,7 +271,7 @@ def checkWorkspace(tf_template, workspace, tf_key, organization):
 @click.option('--workspace', help='Name of the terraform Workspace to add')
 @click.option('--tf_key', default=os.environ['ATLAS_TOKEN'], help='Access Token for Terraform (Uses ATLAS_TOKEN environment var if not provided)')
 @click.option('--organization', default=os.environ['ATLAS_USERNAME'], help='Terraform Organization name (Uses ATLAS_USERNAME environment var if not provided)')
-@click.option('--git_repo', default='', help='Name of the git repo for this project (Optional)')
+@click.option('--git_repo', default='', help='Name of the git repo for this project (e.g. groupname/projectname)')
 def addWorkspace(tf_template, workspace, tf_key, organization, git_repo):
     """Adds a workspace to Terraform
 
@@ -297,7 +297,7 @@ def addWorkspace(tf_template, workspace, tf_key, organization, git_repo):
     myGateway = apiGateway(api_token=tf_key, organization=organization)
 
     if ( len(git_repo) > 0):
-        print("Not yet implemented")
+        response = myGateway.addWorkspaceWithVcs(workspace, git_repo)
     else:
         response = myGateway.addWorkspace(workspace)
 
@@ -307,6 +307,41 @@ def addWorkspace(tf_template, workspace, tf_key, organization, git_repo):
     
     return(0)
     
+
+@cli.command()
+@click.option('--tf_key', default=os.environ['ATLAS_TOKEN'], help='Access Token for Terraform (Uses ATLAS_TOKEN environment var if not provided)')
+@click.option('--organization', default=os.environ['ATLAS_USERNAME'], help='Terraform Organization name (Uses ATLAS_USERNAME environment var if not provided)')
+def listWorkspaces(tf_key, organization):
+    """Lists all workspaces for a specific account
+    
+    \b
+    Returns:
+        List of workspaces   
+
+    """
+
+    myGateway = apiGateway(api_token=tf_key, organization=organization)
+
+    workspaceList = myGateway.getWorkspaceList()
+
+    if ( 'errors' in workspaceList ):
+        print(workspaceList['errors'][0]['detail'])
+
+    workspaceDict = {d['attributes']['name']: d for d in workspaceList['data']}
+
+    pp.pprint("Current Workspaces:")
+    print('\n')
+    print("{:<32} {:<45}".format('Workspace','Git Repo Link'))
+    print("{:<32} {:<45}".format('---------','-------------'))
+    for k in sorted(workspaceDict.keys()):
+        workspaceName = k
+        if ( 'vcs-repo' in workspaceDict[k]['attributes'] ):
+            repoLink = workspaceDict[k]['attributes']['vcs-repo']['identifier']
+        else:
+            repoLink = 'N/A'
+        
+        print("{:<32} {:<45}".format(workspaceName, repoLink))
+
 
 
 if __name__ == "__main__":
