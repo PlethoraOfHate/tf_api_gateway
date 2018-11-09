@@ -26,12 +26,12 @@ myToken = '[TF_TOKEN]'
 myOrg = '[TERRAFORM_USER]'
 myWorkspace = '[WORSPACE_NAME]
 
-myGateway = apiGateway(api_token = myToken, 
-                       organization = myOrg, 
+myGateway = apiGateway(api_token = myToken,
+                       organization = myOrg,
                        workspace = myWorkspace)
 
 ## Add a variable to workspace
-myGateway.addVariable( var_name="var_name", 
+myGateway.addVariable( var_name="var_name",
                        var_value="var_value" )
 ```
 
@@ -58,7 +58,7 @@ Currently, the following methods are implemented:
 In addition to the library, I have provided a console application the implements the apiGateway interface. The primary intention of this tool is to facilitate the integration of Terraform into a CI/CD pipeline, however you could use it any way you see fit. (Obviously!) The application has detailed help when run from the console, as shown below...
 
 ```
-user@host:/$ terraformGateway 
+user@host:/$ terraformGateway
 Usage: terraformGateway [OPTIONS] COMMAND [ARGS]...
 
   Console utility for interfacing with Terraform Enterprise

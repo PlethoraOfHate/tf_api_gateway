@@ -1,14 +1,18 @@
 #!/usr/bin/env python
-
-from contextlib import contextmanager
-import os, sys, argparse
-import hcl
-import click
+import argparse
+import os
 import pprint
-sys.path.insert(1, os.path.join(sys.path[0], '..'))
+import sys
+from contextlib import contextmanager
+
+import click
+import hcl
+
 from tf_api_gateway import apiGateway
+sys.path.insert(1, os.path.join(sys.path[0], '..'))
 
 pp = pprint.PrettyPrinter(indent=2)
+
 
 @contextmanager
 def log_call(msg):
@@ -16,16 +20,17 @@ def log_call(msg):
     yield
     click.echo("Finished {}".format(msg))
 
+
 def load_terraform(template_file):
     with open(template_file, 'r') as fp:
         obj = hcl.load(fp)
 
     for k, v in enumerate(obj['variable']):
-        if ( 'default' not in obj['variable'][v] ):
+        if ('default' not in obj['variable'][v]):
             obj['variable'][v]['default'] = ''
-            
 
     return(obj)
+
 
 def dict_compare(dict1, dict2):
     d1_keys = set(dict1.keys())
@@ -33,10 +38,13 @@ def dict_compare(dict1, dict2):
     intersect_keys = d1_keys.intersection(d2_keys)
     added_keys = d1_keys - d2_keys
     removed_keys = d2_keys - d1_keys
-    modified_keys = {o : (dict1[o], dict2[o]) for o in intersect_keys if str(dict1[o]['default']) != str(dict2[o]['attributes']['value'])}
-    same_keys = set(o for o in intersect_keys if str(dict1[o]['default']) == str(dict2[o]['attributes']['value']))
+    modified_keys = {o: (dict1[o], dict2[o]) for o in intersect_keys if str(
+        dict1[o]['default'],
+    ) != str(dict2[o]['attributes']['value'])}
+    same_keys = set(o for o in intersect_keys if str(
+        dict1[o]['default'],
+    ) == str(dict2[o]['attributes']['value']))
     return added_keys, removed_keys, modified_keys, same_keys
-
 
 
 @click.group()
@@ -58,17 +66,21 @@ def compare(tf_template, workspace, tf_key, organization):
     """Compares variables between Terraform and TF File and outputs the findings"""
     templateData = load_terraform(tf_template)
 
-    myGateway = apiGateway(api_token=tf_key, organization=organization, workspace=workspace)
+    myGateway = apiGateway(
+        api_token=tf_key, organization=organization, workspace=workspace,
+    )
 
     var_list = myGateway.getVariableList().get("data", [])
     currentVars = {d["attributes"]["key"]: d for d in var_list}
 
-    added_keys, removed_keys, modified_keys, same_keys = dict_compare(templateData['variable'], currentVars)
+    added_keys, removed_keys, modified_keys, same_keys = dict_compare(
+        templateData['variable'], currentVars,
+    )
 
     print('Variables Added:')
     print('\n')
-    print("{:<8} {:<15}".format('Key','Variable'))
-    print("{:<8} {:<15}".format('---','--------'))
+    print("{:<8} {:<15}".format('Key', 'Variable'))
+    print("{:<8} {:<15}".format('---', '--------'))
     for k, v in enumerate(added_keys):
         label = v
         print("{:<8} {:<15}".format(k, label))
@@ -76,8 +88,8 @@ def compare(tf_template, workspace, tf_key, organization):
     print('\n')
     pp.pprint("Variables Removed:")
     print('\n')
-    print("{:<8} {:<15}".format('Key','Variable'))
-    print("{:<8} {:<15}".format('---','--------'))
+    print("{:<8} {:<15}".format('Key', 'Variable'))
+    print("{:<8} {:<15}".format('---', '--------'))
     for k, v in enumerate(removed_keys):
         label = v
         print("{:<8} {:<15}".format(k, label))
@@ -85,8 +97,8 @@ def compare(tf_template, workspace, tf_key, organization):
     print('\n')
     pp.pprint("Variables Modified:")
     print('\n')
-    print("{:<8} {:<15}".format('Variable','New Value'))
-    print("{:<8} {:<15}".format('--------','---------'))
+    print("{:<8} {:<15}".format('Variable', 'New Value'))
+    print("{:<8} {:<15}".format('--------', '---------'))
     for k, v in modified_keys.items():
         label = v[0]['default']
         print("{:<8} {:<15}".format(k, label))
@@ -94,14 +106,15 @@ def compare(tf_template, workspace, tf_key, organization):
     print('\n')
     pp.pprint("Variables Unchanged:")
     print('\n')
-    print("{:<8} {:<15}".format('Key','Variable'))
-    print("{:<8} {:<15}".format('---','--------'))
+    print("{:<8} {:<15}".format('Key', 'Variable'))
+    print("{:<8} {:<15}".format('---', '--------'))
     for k, v in enumerate(same_keys):
         label = v
         print("{:<8} {:<15}".format(k, label))
 
     print('\n')
     print('\n')
+
 
 @cli.command()
 @click.option('--tf_template', help='Terraform template containing the variables')
@@ -110,7 +123,7 @@ def compare(tf_template, workspace, tf_key, organization):
 @click.option('--organization', default=os.environ['ATLAS_USERNAME'], help='Terraform Organization name (Uses ATLAS_USERNAME environment var if not provided)')
 def addNew(tf_template, workspace, tf_key, organization):
     """Adds all new variables from the TF file to Terraform
-    
+
     If you have 'aws_access_key' or 'aws_secret_key' variables in your terraform file,
     the application will use the following env vars to fill in those values (if found) and flags them as 'sensitive'
 
@@ -121,13 +134,17 @@ def addNew(tf_template, workspace, tf_key, organization):
 
     templateData = load_terraform(tf_template)
 
-    myGateway = apiGateway(api_token=tf_key, organization=organization, workspace=workspace)
+    myGateway = apiGateway(
+        api_token=tf_key, organization=organization, workspace=workspace,
+    )
 
     var_list = myGateway.getVariableList().get("data", [])
     currentVars = {d["attributes"]["key"]: d for d in var_list}
 
-    added_keys, removed_keys, modified_keys, same_keys = dict_compare(templateData['variable'], currentVars)
-    
+    added_keys, removed_keys, modified_keys, same_keys = dict_compare(
+        templateData['variable'], currentVars,
+    )
+
     with log_call("adding variables..."):
         tf_var_list = templateData['variable']
         with click.progressbar(added_keys) as keys_to_add:
@@ -135,7 +152,7 @@ def addNew(tf_template, workspace, tf_key, organization):
                 var_name = v
                 sensitive = False
 
-                if ( not isinstance( tf_var_list[var_name]['default'], int ) and not isinstance( tf_var_list[var_name]['default'], dict )):
+                if (not isinstance(tf_var_list[var_name]['default'], int) and not isinstance(tf_var_list[var_name]['default'], dict)):
                     if (len(tf_var_list[var_name]['default']) > 0):
                         var_value = tf_var_list[var_name]['default']
                     else:
@@ -143,25 +160,25 @@ def addNew(tf_template, workspace, tf_key, organization):
                 else:
                     var_value = tf_var_list[var_name]['default']
 
-                if ( var_name == 'aws_access_key' ):
-                    if ( "TF_VAR_aws_access_key" in os.environ):
+                if (var_name == 'aws_access_key'):
+                    if ("TF_VAR_aws_access_key" in os.environ):
                         var_value = os.environ['TF_VAR_aws_access_key']
                         sensitive = True
-                    elif ( "AWS_ACCESS_KEY_ID" in os.environ):
+                    elif ("AWS_ACCESS_KEY_ID" in os.environ):
                         var_value = os.environ['AWS_ACCESS_KEY_ID']
                         sensitive = True
 
-                if ( var_name == 'aws_secret_key' ):
-                    if ( "TF_VAR_aws_secret_key" in os.environ):
+                if (var_name == 'aws_secret_key'):
+                    if ("TF_VAR_aws_secret_key" in os.environ):
                         var_value = os.environ['TF_VAR_aws_secret_key']
                         sensitive = True
-                    elif ( "AWS_SECRET_ACCESS_KEY" in os.environ):
+                    elif ("AWS_SECRET_ACCESS_KEY" in os.environ):
                         var_value = os.environ['AWS_SECRET_ACCESS_KEY']
                         sensitive = True
-                        
 
-                myGateway.addVariable(var_name, var_value, is_sensitive=sensitive)
-
+                myGateway.addVariable(
+                    var_name, var_value, is_sensitive=sensitive,
+                )
 
 
 @cli.command()
@@ -174,12 +191,16 @@ def removeMissing(tf_template, workspace, tf_key, organization):
 
     templateData = load_terraform(tf_template)
 
-    myGateway = apiGateway(api_token=tf_key, organization=organization, workspace=workspace)
+    myGateway = apiGateway(
+        api_token=tf_key, organization=organization, workspace=workspace,
+    )
 
     var_list = myGateway.getVariableList().get("data", [])
     currentVars = {d["attributes"]["key"]: d for d in var_list}
 
-    added_keys, removed_keys, modified_keys, same_keys = dict_compare(templateData['variable'], currentVars)
+    added_keys, removed_keys, modified_keys, same_keys = dict_compare(
+        templateData['variable'], currentVars,
+    )
 
     if (len(removed_keys) < 1):
         print("No variables to remove")
@@ -190,7 +211,7 @@ def removeMissing(tf_template, workspace, tf_key, organization):
             for k, v in enumerate(keys_to_remove):
                 var_name = v
 
-                myGateway.deleteVariable( var_name )
+                myGateway.deleteVariable(var_name)
 
 
 @cli.command()
@@ -202,12 +223,16 @@ def updateValues(tf_template, workspace, tf_key, organization):
     """Updates variables in Terraform with the values in the TF file"""
     templateData = load_terraform(tf_template)
 
-    myGateway = apiGateway(api_token=tf_key, organization=organization, workspace=workspace)
+    myGateway = apiGateway(
+        api_token=tf_key, organization=organization, workspace=workspace,
+    )
 
     var_list = myGateway.getVariableList().get("data", [])
     currentVars = {d["attributes"]["key"]: d for d in var_list}
 
-    added_keys, removed_keys, modified_keys, same_keys = dict_compare(templateData['variable'], currentVars)
+    added_keys, removed_keys, modified_keys, same_keys = dict_compare(
+        templateData['variable'], currentVars,
+    )
 
     if (len(modified_keys) < 1):
         print("Nothing to update")
@@ -220,10 +245,10 @@ def updateValues(tf_template, workspace, tf_key, organization):
                 var_name = v
                 var_value = tf_var_list[var_name]['default']
 
-                if ( (not isinstance(var_value, dict)) and (len(str(var_value)) > 0 )):
-                    myGateway.updateVariable( var_name, var_value )
+                if ((not isinstance(var_value, dict)) and (len(str(var_value)) > 0)):
+                    myGateway.updateVariable(var_name, var_value)
 
-                    
+
 @cli.command()
 @click.option('--tf_template', default='', help='Terraform template containing the workspace to check')
 @click.option('--workspace', default='', help='Name of the terraform Workspace to check')
@@ -231,34 +256,36 @@ def updateValues(tf_template, workspace, tf_key, organization):
 @click.option('--organization', default=os.environ['ATLAS_USERNAME'], help='Terraform Organization name (Uses ATLAS_USERNAME environment var if not provided)')
 def checkWorkspace(tf_template, workspace, tf_key, organization):
     """Checks to see if Workspace exists
-    
+
     If not provided, workspace in TF file will be used. (Uses 'atlas' block)
     If TF file is not provided, then workspace is required.
     If both are provided, workspace will be used
-    
+
     \b
     Returns:
         1 if exists, else 0
 
     """
-    if ( len(tf_template) > 0):
+    if (len(tf_template) > 0):
         templateData = load_terraform(tf_template)
 
-    if ( len(workspace) < 1 ):
-        if ( 'atlas' in templateData ):
+    if (len(workspace) < 1):
+        if ('atlas' in templateData):
             temp_name = templateData['atlas']['name'].split('/')
             workspace = temp_name[1]
         else:
             print("Atlas config not found in TF. Exiting")
             return(2)
 
-    myGateway = apiGateway(api_token=tf_key, organization=organization, workspace=workspace)
+    myGateway = apiGateway(
+        api_token=tf_key, organization=organization, workspace=workspace,
+    )
 
     current_workspaces = myGateway.getWorkspaceList()
 
     workspace_list = current_workspaces['data']
     for k, v in enumerate(workspace_list):
-        if ( v['attributes']['name'] == workspace ):
+        if (v['attributes']['name'] == workspace):
             print("Workspace exists")
             return(1)
 
@@ -277,17 +304,17 @@ def addWorkspace(tf_template, workspace, tf_key, organization, git_repo):
 
     If not provided, workspace in TF file will be used.
     If TF file is not provided, then workspace is required.
-    
+
     \b
     Returns:
-        0 if successful, else 1    
+        0 if successful, else 1
 
     """
-    if ( len(tf_template) > 0):
+    if (len(tf_template) > 0):
         templateData = load_terraform(tf_template)
 
-    if ( len(workspace) < 1 ):
-        if ( 'atlas' in templateData ):
+    if (len(workspace) < 1):
+        if ('atlas' in templateData):
             temp_name = templateData['atlas']['name'].split('/')
             workspace = temp_name[1]
         else:
@@ -296,27 +323,27 @@ def addWorkspace(tf_template, workspace, tf_key, organization, git_repo):
 
     myGateway = apiGateway(api_token=tf_key, organization=organization)
 
-    if ( len(git_repo) > 0):
+    if (len(git_repo) > 0):
         response = myGateway.addWorkspaceWithVcs(workspace, git_repo)
     else:
         response = myGateway.addWorkspace(workspace)
 
-    if ( 'errors' in response ):
+    if ('errors' in response):
         print(response['errors'][0]['detail'])
         return(1)
-    
+
     return(0)
-    
+
 
 @cli.command()
 @click.option('--tf_key', default=os.environ['ATLAS_TOKEN'], help='Access Token for Terraform (Uses ATLAS_TOKEN environment var if not provided)')
 @click.option('--organization', default=os.environ['ATLAS_USERNAME'], help='Terraform Organization name (Uses ATLAS_USERNAME environment var if not provided)')
 def listWorkspaces(tf_key, organization):
     """Lists all workspaces for a specific account
-    
+
     \b
     Returns:
-        List of workspaces   
+        List of workspaces
 
     """
 
@@ -324,26 +351,24 @@ def listWorkspaces(tf_key, organization):
 
     workspaceList = myGateway.getWorkspaceList()
 
-    if ( 'errors' in workspaceList ):
+    if ('errors' in workspaceList):
         print(workspaceList['errors'][0]['detail'])
 
     workspaceDict = {d['attributes']['name']: d for d in workspaceList['data']}
 
     pp.pprint("Current Workspaces:")
     print('\n')
-    print("{:<32} {:<45}".format('Workspace','Git Repo Link'))
-    print("{:<32} {:<45}".format('---------','-------------'))
+    print("{:<32} {:<45}".format('Workspace', 'Git Repo Link'))
+    print("{:<32} {:<45}".format('---------', '-------------'))
     for k in sorted(workspaceDict.keys()):
         workspaceName = k
-        if ( 'vcs-repo' in workspaceDict[k]['attributes'] ):
+        if ('vcs-repo' in workspaceDict[k]['attributes']):
             repoLink = workspaceDict[k]['attributes']['vcs-repo']['identifier']
         else:
             repoLink = 'N/A'
-        
-        print("{:<32} {:<45}".format(workspaceName, repoLink))
 
+        print("{:<32} {:<45}".format(workspaceName, repoLink))
 
 
 if __name__ == "__main__":
     cli()
-

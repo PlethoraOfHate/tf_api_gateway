@@ -1,10 +1,12 @@
+import json
 import sys
 import traceback
-import json
+
 import requests
 
+
 class apiGateway(object):
-    
+
     def __init__(self, api_token, organization, **kwargs):
         """ Initializes the class object
 
@@ -16,19 +18,21 @@ class apiGateway(object):
         """
         self.api_token = api_token
         self.organization = organization
-        
+
         self.workspace = kwargs.pop('workspace', 'new_workspace')
-        self.end_point = kwargs.pop('tf_end_point', 'https://app.terraform.io/api/v2')
+        self.end_point = kwargs.pop(
+            'tf_end_point', 'https://app.terraform.io/api/v2',
+        )
 
 
-#variables
+# variables
 
     def getVariableList(self):
-        """ Gets a list of all variables on the current workspace 
-        
+        """ Gets a list of all variables on the current workspace
+
         Returns:
             dict: The list of variables
-            
+
         """
         end_point = self.end_point + "/vars?"
         org_filter = "filter[organization][name]=" + self.organization
@@ -36,12 +40,13 @@ class apiGateway(object):
 
         web_request = end_point + org_filter + "&" + workspace_filter
 
-        headers = {'Authorization': 'Bearer ' + self.api_token,
-                   'Content-Type': 'application/vnd.api+json'}
-        
+        headers = {
+            'Authorization': 'Bearer ' + self.api_token,
+            'Content-Type': 'application/vnd.api+json',
+        }
 
         response = requests.get(web_request, headers=headers)
-        
+
         data = json.loads(response.text)
 
         return(data)
@@ -58,18 +63,21 @@ class apiGateway(object):
         """
 
         end_point = self.end_point + "/vars"
-        headers = {'Authorization': 'Bearer ' + self.api_token,
-                   'Content-Type': 'application/vnd.api+json'}
+        headers = {
+            'Authorization': 'Bearer ' + self.api_token,
+            'Content-Type': 'application/vnd.api+json',
+        }
 
-    
-        new_variable = self.__buildNewVariable( var_name, str(var_value) )
+        new_variable = self.__buildNewVariable(var_name, str(var_value))
 
-        if isinstance( var_value, dict ):
+        if isinstance(var_value, dict):
             new_variable['data']['attributes']['hcl'] = True
 
-        new_variable['data']['attributes']['sensitive'] = kwargs.pop('is_sensitive', False )
+        new_variable['data']['attributes']['sensitive'] = kwargs.pop(
+            'is_sensitive', False,
+        )
 
-        payload = json.dumps( new_variable )
+        payload = json.dumps(new_variable)
 
         response = requests.post(end_point, headers=headers, data=payload)
 
@@ -89,8 +97,10 @@ class apiGateway(object):
 
         current_vars = self.getVariableList().get("data", [])
         end_point = self.end_point + "/vars/"
-        headers = {'Authorization': 'Bearer ' + self.api_token,
-                   'Content-Type': 'application/vnd.api+json'}
+        headers = {
+            'Authorization': 'Bearer ' + self.api_token,
+            'Content-Type': 'application/vnd.api+json',
+        }
 
         try:
             var_dict = {d["attributes"]["key"]: d for d in current_vars}
@@ -105,7 +115,6 @@ class apiGateway(object):
 
         return(response.text)
 
-
     def updateVariable(self, var_name, var_value):
         """ Updates the specified variable with the supplied value
 
@@ -119,8 +128,10 @@ class apiGateway(object):
 
         current_vars = self.getVariableList().get("data", [])
         end_point = self.end_point + "/vars/"
-        headers = {'Authorization': 'Bearer ' + self.api_token,
-                   'Content-Type': 'application/vnd.api+json'}
+        headers = {
+            'Authorization': 'Bearer ' + self.api_token,
+            'Content-Type': 'application/vnd.api+json',
+        }
 
         try:
             var_dict = {d["attributes"]["key"]: d for d in current_vars}
@@ -136,7 +147,7 @@ class apiGateway(object):
         new_var['data']['attributes']['hcl'] = specific_var['attributes']['hcl']
         new_var['data']['attributes']['sensitive'] = specific_var['attributes']['sensitive']
         new_var['data']['id]'] = specific_var['id']
-        new_var.pop('filter',None)
+        new_var.pop('filter', None)
 
         payload = json.dumps(new_var)
 
@@ -176,22 +187,27 @@ class apiGateway(object):
 
         return(full_array)
 
-#endvariables
+# endvariables
 
 
-#workspaces
+# workspaces
+
+
     def getWorkspaceList(self):
-        """ Returns a list of all the current workspaces on your account 
-        
+        """ Returns a list of all the current workspaces on your account
+
         Returns:
             dict: The JSON list of workspaces from the API
-            
+
         """
 
-        end_point = self.end_point + "/organizations/" + self.organization +"/workspaces?size=100"
+        end_point = self.end_point + "/organizations/" + \
+            self.organization + "/workspaces?size=100"
 
-        headers = {'Authorization': 'Bearer ' + self.api_token,
-                   'Content-Type': 'application/vnd.api+json'}
+        headers = {
+            'Authorization': 'Bearer ' + self.api_token,
+            'Content-Type': 'application/vnd.api+json',
+        }
 
         response = requests.get(end_point, headers=headers)
 
@@ -207,7 +223,6 @@ class apiGateway(object):
             nextPage = json.loads(nextPage.text)
             data['data'] = data['data'] + nextPage['data']
             x += 1
- 
 
         return(data)
 
@@ -221,11 +236,13 @@ class apiGateway(object):
             dict: The JSON response from the API
         """
 
-        end_point = self.end_point + "/organizations/" + self.organization +"/workspaces"
-        headers = {'Authorization': 'Bearer ' + self.api_token,
-                   'Content-Type': 'application/vnd.api+json'}
+        end_point = self.end_point + "/organizations/" + self.organization + "/workspaces"
+        headers = {
+            'Authorization': 'Bearer ' + self.api_token,
+            'Content-Type': 'application/vnd.api+json',
+        }
 
-        payload = json.dumps( self.__buildNewWorkspace(workspace_name) )
+        payload = json.dumps(self.__buildNewWorkspace(workspace_name))
 
         response = requests.post(end_point, headers=headers, data=payload)
 
@@ -244,11 +261,17 @@ class apiGateway(object):
             dict: The JSON response from the API
         """
         oauth_token = self.getOauthTokens()
-        end_point = self.end_point + "/organizations/" + self.organization +"/workspaces"
-        headers = {'Authorization': 'Bearer ' + self.api_token,
-                   'Content-Type': 'application/vnd.api+json'}
+        end_point = self.end_point + "/organizations/" + self.organization + "/workspaces"
+        headers = {
+            'Authorization': 'Bearer ' + self.api_token,
+            'Content-Type': 'application/vnd.api+json',
+        }
 
-        payload = json.dumps( self.__buildNewWorkspace(workspace_name, git_repo_name=git_repo_name, oauth_token_id=oauth_token['data'][0]['id']) )
+        payload = json.dumps(self.__buildNewWorkspace(
+            workspace_name, git_repo_name=git_repo_name, oauth_token_id=oauth_token[
+                'data'
+            ][0]['id'],
+        ))
 
         response = requests.post(end_point, headers=headers, data=payload)
 
@@ -265,9 +288,12 @@ class apiGateway(object):
         Returns:
             dict: The JSON response from the API
         """
-        end_point = self.end_point + "/organizations/" + self.organization +"/workspaces/" + workspace_name
-        headers = {'Authorization': 'Bearer ' + self.api_token,
-                   'Content-Type': 'application/vnd.api+json'}
+        end_point = self.end_point + "/organizations/" + \
+            self.organization + "/workspaces/" + workspace_name
+        headers = {
+            'Authorization': 'Bearer ' + self.api_token,
+            'Content-Type': 'application/vnd.api+json',
+        }
 
         response = requests.delete(end_point, headers=headers)
 
@@ -290,17 +316,17 @@ class apiGateway(object):
 
             attributes['name'] = workspace_name
             attributes['working-directory'] = ""
-            if ( 'git_repo_name' in kwargs ):
+            if ('git_repo_name' in kwargs):
                 vcs_repo['identifier'] = kwargs['git_repo_name']
             else:
                 return("Error: Git Repo Name Required")
-            
-            if ( 'oauth_token_id' in kwargs ):
+
+            if ('oauth_token_id' in kwargs):
                 vcs_repo['oauth-token-id'] = kwargs['oauth_token_id']
             else:
                 return("Error: OAuth Token ID Required")
 
-            if ( 'git_branch' in kwargs ):
+            if ('git_branch' in kwargs):
                 vcs_repo['branch'] = kwargs['git_branch']
                 vcs_repo['default-branch'] = False
             else:
@@ -323,28 +349,28 @@ class apiGateway(object):
 
         return(full_array)
 
-#endworkspaces
+# endworkspaces
 
-#OAuthTokens
+# OAuthTokens
 
     def getOauthTokens(self):
-        """ Gets a list of all the OAuth tokens configured for your account 
-        
+        """ Gets a list of all the OAuth tokens configured for your account
+
         Returns:
             dict: The JSON list of OAuth tokens from the API
         """
-        end_point = self.end_point + "/organizations/" + self.organization +"/oauth-tokens"
+        end_point = self.end_point + "/organizations/" + \
+            self.organization + "/oauth-tokens"
 
-        headers = {'Authorization': 'Bearer ' + self.api_token,
-                   'Content-Type': 'application/vnd.api+json'}
+        headers = {
+            'Authorization': 'Bearer ' + self.api_token,
+            'Content-Type': 'application/vnd.api+json',
+        }
 
         response = requests.get(end_point, headers=headers)
-        
+
         data = json.loads(response.text)
 
         return(data)
 
-#endOAuthTokens
-
-
-    
+# endOAuthTokens
