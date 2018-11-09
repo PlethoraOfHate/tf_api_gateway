@@ -46,3 +46,6 @@ bin/
 
 # VSCode
 .vscode/
+
+# pyenv
+.python-version
