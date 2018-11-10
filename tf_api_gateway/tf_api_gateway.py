@@ -1,6 +1,4 @@
 import json
-import sys
-import traceback
 
 import requests
 
@@ -15,7 +13,7 @@ class apiGateway(object):
             organization (str): Terraform username
             workspace (str): *OPTIONAL* Name of the workspace you're working with (Defaults to 'new_workspace' when not provided)
             tf_end_point (str): *OPTIONAL* URL of the Terraform API endpoint
-        """
+        """  # noqa
         self.api_token = api_token
         self.organization = organization
 
@@ -24,9 +22,7 @@ class apiGateway(object):
             'tf_end_point', 'https://app.terraform.io/api/v2',
         )
 
-
-# variables
-
+    # variables
     def getVariableList(self):
         """ Gets a list of all variables on the current workspace
 
@@ -106,7 +102,7 @@ class apiGateway(object):
             var_dict = {d["attributes"]["key"]: d for d in current_vars}
             specific_var = var_dict[var_name]
 
-        except:
+        except KeyError:
             return("Error: Variable - " + var_name + " - not found.")
 
         end_point = end_point + specific_var['id']
@@ -137,7 +133,7 @@ class apiGateway(object):
             var_dict = {d["attributes"]["key"]: d for d in current_vars}
             specific_var = var_dict[var_name]
 
-        except:
+        except KeyError:
             return("Error: Variable - " + var_name + " - not found.")
 
         end_point = end_point + specific_var['id']
@@ -186,13 +182,9 @@ class apiGateway(object):
         full_array['filter'] = filter
 
         return(full_array)
+    # endvariables
 
-# endvariables
-
-
-# workspaces
-
-
+    # workspaces
     def getWorkspaceList(self):
         """ Returns a list of all the current workspaces on your account
 
@@ -348,11 +340,9 @@ class apiGateway(object):
             full_array['data'] = data
 
         return(full_array)
+    # endworkspaces
 
-# endworkspaces
-
-# OAuthTokens
-
+    # OAuthTokens
     def getOauthTokens(self):
         """ Gets a list of all the OAuth tokens configured for your account
 
@@ -372,5 +362,4 @@ class apiGateway(object):
         data = json.loads(response.text)
 
         return(data)
-
-# endOAuthTokens
+    # endOAuthTokens
