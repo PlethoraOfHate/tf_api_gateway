@@ -27,6 +27,7 @@ setup(
         "click",
         "pyhcl",
         "prettyprint",
+        "requests",
     ],
     include_package_data=True,
     zip_safe=False,
